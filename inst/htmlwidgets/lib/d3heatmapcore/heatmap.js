@@ -8,9 +8,11 @@ function heatmap(selector, data, options) {
   var bbox = el.node().getBoundingClientRect();
 
   var Controller = function() {
-    this._events = d3.dispatch("highlight", "datapoint_hover", "transform");
+    // this._events = d3.dispatch("highlight", "datapoint_hover", "transform");
+    this._events = d3.dispatch("highlight", "datapoint_click", "transform");
     this._highlight = {x: null, y: null};
-    this._datapoint_hover = {x: null, y: null, value: null};
+    // this._datapoint_hover = {x: null, y: null, value: null};
+    this._datapoint_click = {x: null, y: null, value: null};
     this._transform = null;
   };
   (function() {
@@ -25,13 +27,21 @@ function heatmap(selector, data, options) {
       }
       this._events.highlight.call(this, this._highlight);
     };
-
+/*
     this.datapoint_hover = function(_) {
       if (!arguments.length) return this._datapoint_hover;
       
       this._datapoint_hover = _;
       this._events.datapoint_hover.call(this, _);
     };
+*/
+    this.datapoint_click= function(_) {
+      if (!arguments.length) return this._datapoint_click;
+      
+      this._datapoint_click= _;
+      this._events.datapoint_click.call(this, _);
+    };
+
 
     this.transform = function(_) {
       if (!arguments.length) return this._transform;
@@ -184,12 +194,18 @@ function heatmap(selector, data, options) {
           return "<table>" + 
             "<tr><th align=\"right\">Row</th><td>" + htmlEscape(data.rows[d.row]) + "</td></tr>" +
             "<tr><th align=\"right\">Column</th><td>" + htmlEscape(data.cols[d.col]) + "</td></tr>" +
-            "<tr><th align=\"right\">Value</th><td>" + htmlEscape(d.label) + "</td></tr>" +
+            "<tr><th align=\"right\">Score</th><td>" + htmlEscape(d.label) + "</td></tr>" +
             "</table>";
         })
         .direction("se")
         .style("position", "fixed");
-    
+/*
+    svg = svg.on("dbclick", function() {
+       controller.transform({ scale: [1,1], translate: [0,0], extent: [[0,0],[cols,rows]] });
+    }
+*/
+
+/* Temporarily disable brush until fixing zoom-out feature */
     var brush = d3.svg.brush()
         .x(x)
         .y(y)
@@ -203,14 +219,19 @@ function heatmap(selector, data, options) {
           d3.select(this).call(brush.extent(extent));
         })
         .on('brushend', function() {
+        
+        // This event is equivalent to click without dragging a rect area   --> remove this to use "click" for identifying datapoint
+/*
+          if (brush.empty()) {     
 
-          if (brush.empty()) {
-            controller.transform({
-              scale: [1,1],
-              translate: [0,0],
-              extent: [[0,0],[cols,rows]]
+            // controller.transform({
+            //   scale: [1,1],
+            //   translate: [0,0],
+            //   extent: [[0,0],[cols,rows]]
             });
-          } else {
+          } else */
+
+          if (! brush.empty() ) {
             var tf = controller.transform();
             var ex = brush.extent();
             var scale = [
@@ -284,6 +305,7 @@ function heatmap(selector, data, options) {
         .on("mouseenter", function() {
           tip.style("display", "block");
         })
+        /*
         .on("mousemove", function() {
           var e = d3.event;
           var offsetX = d3.event.offsetX;
@@ -304,12 +326,46 @@ function heatmap(selector, data, options) {
             left: d3.event.clientX + 15 + "px",
             opacity: 0.9
           });
-          controller.datapoint_hover({col:col, row:row, label:label});
+          // controller.datapoint_hover({col:col, row:row, label:label});
+          controller.datapoint_click ({col:col, row:row, label:label});
         })
         .on("mouseleave", function() {
           tip.hide().style("display", "none");
-          controller.datapoint_hover(null);
+          // controller.datapoint_hover(null);
+          controller.datapoint_click(null);
         });
+        */
+
+        .on("click", function () {
+          var e = d3.event;
+          var offsetX = d3.event.offsetX;
+          var offsetY = d3.event.offsetY;
+          if (typeof(offsetX) === "undefined") {
+            // Firefox 38 and earlier
+            var target = e.target || e.srcElement;
+            var rect = target.getBoundingClientRect();
+            offsetX = e.clientX - rect.left,
+            offsetY = e.clientY - rect.top;
+          }
+          
+          var col = Math.floor(x.invert(offsetX));
+          var row = Math.floor(y.invert(offsetY));
+          var label = merged[row*cols + col].label;
+          tip.show({col: col, row: row, label: label}).style({
+            top: d3.event.clientY + 15 + "px",
+            left: d3.event.clientX + 15 + "px",
+            opacity: 0.9
+          });
+          // controller.datapoint_hover({col:col, row:row, label:label});
+          controller.datapoint_click ({col:col, row:row, label:label});
+        });
+
+//         .on("dbclick", function () {
+//             controller.transform({
+//             scale: [1,1],
+//             translate: [0,0],
+//             extent: [[0,0],[cols,rows]]
+//         });
 
     controller.on('highlight.datapt', function(hl) {
       rect.classed('highlight', function(d, i) {
@@ -559,13 +615,19 @@ function heatmap(selector, data, options) {
     draw(lines);
   }
 
- 
+/* 
   var dispatcher = d3.dispatch('hover', 'click');
   
   controller.on("datapoint_hover", function(_) {
     dispatcher.hover({data: _});
   });
-  
+*/ 
+
+  var dispatcher = d3.dispatch('click');
+  controller.on("datapoint_click", function(_) {
+    dispatcher.click({data: _});
+  });
+
   function on_col_label_mouseenter(e) {
     controller.highlight(+d3.select(this).attr("index"), null);
   }
