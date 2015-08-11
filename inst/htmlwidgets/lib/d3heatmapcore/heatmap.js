@@ -328,14 +328,14 @@ function heatmap(selector, data, options) {
           });
           // controller.datapoint_hover({col:col, row:row, label:label});
           controller.datapoint_click ({col:col, row:row, label:label});
-        })
+        });
+
         .on("mouseleave", function() {
           tip.hide().style("display", "none");
           // controller.datapoint_hover(null);
           controller.datapoint_click(null);
         });
-        */
-
+*/
         .on("click", function () {
           var e = d3.event;
           var offsetX = d3.event.offsetX;
@@ -356,8 +356,10 @@ function heatmap(selector, data, options) {
             left: d3.event.clientX + 15 + "px",
             opacity: 0.9
           });
-          // controller.datapoint_hover({col:col, row:row, label:label});
           controller.datapoint_click ({col:col, row:row, label:label});
+        })
+        .on("mouseleave", function() {
+          tip.hide().style("display", "none");
         });
 
 //         .on("dbclick", function () {
