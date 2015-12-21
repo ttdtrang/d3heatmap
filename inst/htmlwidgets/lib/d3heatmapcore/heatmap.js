@@ -199,11 +199,6 @@ function heatmap(selector, data, options) {
         })
         .direction("se")
         .style("position", "fixed");
-/*
-    svg = svg.on("dbclick", function() {
-       controller.transform({ scale: [1,1], translate: [0,0], extent: [[0,0],[cols,rows]] });
-    }
-*/
 
 /* Temporarily disable brush until fixing zoom-out feature */
     var brush = d3.svg.brush()
@@ -362,12 +357,12 @@ function heatmap(selector, data, options) {
           tip.hide().style("display", "none");
         });
 
-//         .on("dbclick", function () {
-//             controller.transform({
-//             scale: [1,1],
-//             translate: [0,0],
-//             extent: [[0,0],[cols,rows]]
-//         });
+        // .on("dblclick", function () {
+        //     controller.transform({
+        //     scale: [1,1],
+        //     translate: [0,0],
+        //     extent: [[0,0],[cols,rows]]
+        // });
 
     controller.on('highlight.datapt', function(hl) {
       rect.classed('highlight', function(d, i) {
